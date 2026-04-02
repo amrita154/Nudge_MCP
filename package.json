@@ -1,0 +1,23 @@
+{
+  "name": "nudge-mcp",
+  "version": "1.0.0",
+  "description": "Personal Life OS — MCP server for goals, roadmap, tasks, ideas",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "start:http": "PORT=3333 node dist/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.10.0",
+    "@supabase/supabase-js": "^2.45.0",
+    "express": "^4.21.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
