@@ -5,14 +5,16 @@
 
 -- ── User Profile (single row per user) ───────────────────────────
 create table if not exists profile (
-  id            serial primary key,
-  name          text,
-  skills        text[]   default '{}',
-  current_focus text,
-  context       text,     -- freeform background Claude reads for context
+  id             serial primary key,
+  name           text,
+  skills         text[]   default '{}',
+  current_focus  text,
+  context        text,          -- freeform background Claude reads for context
+  goals_summary  text,          -- pipe-separated list of the user's stated goals
+  timeline       text,          -- overall timeline, e.g. "6 months", "1 year"
   setup_complete boolean  default false,
-  created_at    timestamptz default now(),
-  updated_at    timestamptz default now()
+  created_at     timestamptz default now(),
+  updated_at     timestamptz default now()
 );
 
 -- ── Goals ────────────────────────────────────────────────────────
@@ -118,3 +120,23 @@ create index if not exists idx_milestones_phase on milestones(phase_id);
 create index if not exists idx_tasks_date       on tasks(task_date);
 create index if not exists idx_tasks_goal       on tasks(goal_id);
 create index if not exists idx_reflections_date on reflections(reflection_date);
+
+-- ─────────────────────────────────────────────────────────────────
+-- MIGRATION — run this if the profile table already exists
+-- Adds goals_summary and timeline columns added in the generic refactor
+-- ─────────────────────────────────────────────────────────────────
+alter table profile add column if not exists goals_summary text;
+alter table profile add column if not exists timeline      text;
+
+-- ─────────────────────────────────────────────────────────────────
+-- DATA RESET — run this if you previously seeded with import_career_agent
+-- Wipes all data so you can start fresh with the generic onboarding flow
+-- WARNING: this deletes everything — goals, phases, milestones, tasks, reflections, ideas, profile
+-- ─────────────────────────────────────────────────────────────────
+-- delete from reflections;
+-- delete from ideas;
+-- delete from tasks;
+-- delete from milestones;
+-- delete from phases;
+-- delete from goals;
+-- delete from profile;

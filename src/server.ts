@@ -34,28 +34,17 @@ const TOOLS = [
   },
   {
     name: "setup_new_user",
-    description: "Create a fresh profile for a brand new user with no prior data. Call this when check_setup shows setup_complete=false and the user wants to start fresh (not import career_agent data).",
+    description: "Create a fresh profile for a brand new user. Call this when check_setup shows setup_complete=false. After calling this, use add_goal → add_phase → add_milestone to build a personalized roadmap based on what the user tells you about their goals and timeline.",
     inputSchema: {
       type: "object",
       required: ["name"],
       properties: {
         name: { type: "string", description: "User's name" },
         skills: { type: "array", items: { type: "string" }, description: "Current skills/technologies the user knows" },
-        current_focus: { type: "string", description: "What the user is currently focused on" },
-        context: { type: "string", description: "Background context: role, experience, goals, constraints" },
-      },
-    },
-  },
-  {
-    name: "import_career_agent",
-    description: "Seed the database with all 10 goals and 6-phase roadmap from career_agent.html. Use this when the user says they want to import their career agent data or continue from where they left off. Creates all goals, phases, and milestones automatically.",
-    inputSchema: {
-      type: "object",
-      required: ["name"],
-      properties: {
-        name: { type: "string", description: "User's name" },
-        skills: { type: "array", items: { type: "string" }, description: "Current skills (e.g. ['React', 'Node.js', 'Python'])" },
-        context: { type: "string", description: "Any additional context about current status, what phase they're on, etc." },
+        current_focus: { type: "string", description: "What the user is currently focused on right now" },
+        context: { type: "string", description: "Background context: role, experience level, constraints, location, motivation" },
+        goals: { type: "array", items: { type: "string" }, description: "List of goals the user wants to pursue, in their own words" },
+        timeline: { type: "string", description: "Overall timeline for their goals, e.g. '6 months', '1 year', '18 months'" },
       },
     },
   },
@@ -79,7 +68,7 @@ const TOOLS = [
   },
   {
     name: "update_profile",
-    description: "Update user profile fields. Use when user shares new info about their skills, focus, or background.",
+    description: "Update user profile fields. Use when user shares new info about their skills, focus, background, or goals.",
     inputSchema: {
       type: "object",
       properties: {
@@ -87,6 +76,8 @@ const TOOLS = [
         skills: { type: "array", items: { type: "string" }, description: "Full updated skills list" },
         current_focus: { type: "string" },
         context: { type: "string", description: "Background context Claude uses for all recommendations" },
+        goals_summary: { type: "string", description: "Pipe-separated summary of the user's goals, e.g. 'Learn ML | Get promoted | Ship a side project'" },
+        timeline: { type: "string", description: "Overall timeline, e.g. '6 months', '1 year'" },
       },
     },
   },
@@ -420,7 +411,7 @@ async function callTool(name: string, args: Record<string, unknown>) {
         total_goals: ((goals as unknown[]) ?? []).length,
         message: profile?.setup_complete
           ? "User is set up. Use get_dashboard to see current state."
-          : "New user — ask if they want to (A) import career_agent goals or (B) start fresh with setup_new_user.",
+          : "New user — ask them about their goals, background, skills, and timeline. Then call setup_new_user, followed by add_goal → add_phase → add_milestone to build their personalized roadmap.",
       };
     });
 
@@ -430,16 +421,10 @@ async function callTool(name: string, args: Record<string, unknown>) {
         skills: (args.skills as string[]) ?? [],
         current_focus: args.current_focus as string,
         context: args.context as string,
+        goals_summary: args.goals ? (args.goals as string[]).join(" | ") : undefined,
+        timeline: args.timeline as string | undefined,
         setup_complete: true,
       })
-    );
-
-    case "import_career_agent": return handle(() =>
-      db.seedFromCareerAgent(
-        args.name as string,
-        (args.skills as string[]) ?? [],
-        (args.context as string) ?? ""
-      )
     );
 
     case "reset_all_data": return handle(async () => {
@@ -456,6 +441,8 @@ async function callTool(name: string, args: Record<string, unknown>) {
         skills: args.skills as string[] | undefined,
         current_focus: args.current_focus as string | undefined,
         context: args.context as string | undefined,
+        goals_summary: args.goals_summary as string | undefined,
+        timeline: args.timeline as string | undefined,
       })
     );
 

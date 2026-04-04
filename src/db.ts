@@ -1,5 +1,4 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
-import { SEED_GOALS, SEED_PHASES } from "./seed.js";
 
 // ── Supabase client (singleton) ───────────────────────────────────────────────
 let _supabase: SupabaseClient | null = null;
@@ -45,6 +44,8 @@ export async function upsertProfile(fields: {
   skills?: string[];
   current_focus?: string;
   context?: string;
+  goals_summary?: string;
+  timeline?: string;
   setup_complete?: boolean;
 }) {
   const sb = getSupabase();
@@ -292,66 +293,6 @@ export async function getDashboard() {
     },
     recent_reflections: recentReflections ?? [],
     recent_ideas: ideas.data ?? [],
-  };
-}
-
-// ── Seed from career_agent ────────────────────────────────────────────────────
-export async function seedFromCareerAgent(userName: string, userSkills: string[], userContext: string) {
-  // 1. Set up profile
-  await upsertProfile({
-    name: userName,
-    skills: userSkills,
-    context: userContext,
-    current_focus: "Phase 1: Foundation + Travel Planner (Weeks 1–4)",
-    setup_complete: true,
-  });
-
-  // 2. Insert goals
-  const goalIds: number[] = [];
-  for (const g of SEED_GOALS) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const created = (await addGoal(g)) as any;
-    goalIds.push(created.id);
-  }
-
-  // 3. Insert phases for goal 0 (primary career goal)
-  const primaryGoalId = goalIds[0];
-  for (const phase of SEED_PHASES) {
-    const phaseGoalId = goalIds[phase.goal_index];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const created = (await addPhase({
-      goal_id: phaseGoalId,
-      phase_number: phase.phase_number,
-      title: phase.title,
-      description: phase.description,
-      timeline: phase.timeline,
-      concepts: phase.concepts,
-      projects: phase.projects,
-      interview_prep: phase.interview_prep,
-      resources: phase.resources,
-    })) as any;
-
-    // Set phase 1 as in_progress for primary goal
-    if (phase.phase_number === 1 && phaseGoalId === primaryGoalId) {
-      await updatePhaseStatus(created.id, "in_progress");
-      await updateGoal(primaryGoalId, { current_phase: 1 });
-    }
-
-    // 4. Add milestones for each phase
-    for (let i = 0; i < phase.milestones.length; i++) {
-      await addMilestone({
-        goal_id: phaseGoalId,
-        phase_id: created.id,
-        title: phase.milestones[i],
-        order_num: i + 1,
-      });
-    }
-  }
-
-  return {
-    goals_created: goalIds.length,
-    phases_created: SEED_PHASES.length,
-    primary_goal_id: primaryGoalId,
   };
 }
 
