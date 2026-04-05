@@ -102,7 +102,7 @@ const TOOLS = [
   },
   {
     name: "add_goal",
-    description: "Add a new goal. Use when user defines a new objective they want to track and make progress on.",
+    description: "Add a new goal. Use when user defines a new objective they want to track and make progress on. Set priority to control how much daily time Claude allocates: high = 60+ min/day (deep work sprint), medium = 30 min/day, low = batched 2-3x/week.",
     inputSchema: {
       type: "object",
       required: ["title"],
@@ -110,6 +110,7 @@ const TOOLS = [
         title: { type: "string", description: "Clear, specific goal title" },
         description: { type: "string", description: "What success looks like, why it matters" },
         category: { type: "string", enum: ["career", "learning", "projects", "health", "finance", "admin", "personal"], description: "Goal category" },
+        priority: { type: "string", enum: ["high", "medium", "low"], description: "Daily time weight: high = 60+ min/day, medium = 30 min/day, low = batched 2-3x/week. Determines how this goal is scheduled in parallel with others." },
         total_phases: { type: "number", description: "How many phases/stages this goal has (default 1)" },
         target_date: { type: "string", description: "Target completion date YYYY-MM-DD" },
       },
@@ -117,7 +118,7 @@ const TOOLS = [
   },
   {
     name: "update_goal",
-    description: "Update a goal's progress, status, description, or current phase. Use after completing milestones or when user's situation changes.",
+    description: "Update a goal's progress, status, priority, description, or current phase. Use after completing milestones or when user's situation changes.",
     inputSchema: {
       type: "object",
       required: ["goal_id"],
@@ -126,6 +127,7 @@ const TOOLS = [
         title: { type: "string" },
         description: { type: "string" },
         category: { type: "string" },
+        priority: { type: "string", enum: ["high", "medium", "low"], description: "Daily time weight: high = 60+ min/day, medium = 30 min/day, low = batched 2-3x/week" },
         status: { type: "string", enum: ["active", "paused", "completed", "archived"] },
         progress: { type: "number", minimum: 0, maximum: 100, description: "Progress percentage 0-100" },
         current_phase: { type: "number", description: "Which phase number is currently active" },
@@ -456,6 +458,7 @@ async function callTool(name: string, args: Record<string, unknown>) {
       title: args.title as string,
       description: args.description as string | undefined,
       category: args.category as string | undefined,
+      priority: args.priority as string | undefined,
       total_phases: args.total_phases as number | undefined,
       target_date: args.target_date as string | undefined,
     }));
@@ -465,6 +468,7 @@ async function callTool(name: string, args: Record<string, unknown>) {
         title: args.title as string | undefined,
         description: args.description as string | undefined,
         category: args.category as string | undefined,
+        priority: args.priority as string | undefined,
         status: args.status as string | undefined,
         progress: args.progress as number | undefined,
         current_phase: args.current_phase as number | undefined,

@@ -72,6 +72,7 @@ export async function addGoal(fields: {
   title: string;
   description?: string;
   category?: string;
+  priority?: string;
   total_phases?: number;
   target_date?: string;
   sort_order?: number;
@@ -83,6 +84,7 @@ export async function updateGoal(id: number, fields: {
   title?: string;
   description?: string;
   category?: string;
+  priority?: string;
   status?: string;
   progress?: number;
   current_phase?: number;

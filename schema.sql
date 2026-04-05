@@ -24,6 +24,7 @@ create table if not exists goals (
   description     text,
   category        text    default 'career',  -- career, learning, health, finance, personal
   status          text    default 'active',  -- active, paused, completed, archived
+  priority        text    default 'medium',  -- high (60+ min/day), medium (30 min/day), low (weekly batch)
   progress        integer default 0 check (progress >= 0 and progress <= 100),
   current_phase   integer default 1,         -- which phase number is active
   total_phases    integer default 1,
@@ -127,6 +128,7 @@ create index if not exists idx_reflections_date on reflections(reflection_date);
 -- ─────────────────────────────────────────────────────────────────
 alter table profile add column if not exists goals_summary text;
 alter table profile add column if not exists timeline      text;
+alter table goals   add column if not exists priority      text default 'medium';
 
 -- ─────────────────────────────────────────────────────────────────
 -- DATA RESET — run this if you previously seeded with import_career_agent
